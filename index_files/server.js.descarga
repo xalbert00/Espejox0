@@ -1,0 +1,379 @@
+const swiping_custom_data_configData = {"fastLoadSelectionChanged":false,"premiumFeaturesEnabled":false,"isTestStore":false,"active":false,"zoomOnHover":false,"showNavigationButton":false,"showThumbnails":false,"thumbnailMode":"NONE","borderColor":"#999999","navigationButtonColor":"#999999","borderRadius":0,"borderWidth":0,"thumbnailImageSize":70,"thumbnailImageBorderWidth":1,"thumbnailImageBorderColor":"#000000","thumbnailImageBorderRadius":0,"enableFastLoad":false}; const swiping_premium_Enabled = false;  
+
+if (typeof exports === 'undefined') {
+   exports = {}
+}
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSwipingOptions = exports.getDefaultsFromState = void 0;
+var getDefaultsFromState = function (_a, premiumEnabled) {
+    var active = _a.active, zoomOnHover = _a.zoomOnHover, showNavigationButton = _a.showNavigationButton, showThumbnails = _a.showThumbnails, thumbnailMode = _a.thumbnailMode, borderColor = _a.borderColor, navigationButtonColor = _a.navigationButtonColor, borderRadius = _a.borderRadius, borderWidth = _a.borderWidth, thumbnailImageSize = _a.thumbnailImageSize, thumbnailImageBorderWidth = _a.thumbnailImageBorderWidth, thumbnailImageBorderColor = _a.thumbnailImageBorderColor, thumbnailImageBorderRadius = _a.thumbnailImageBorderRadius, enableFastLoad = _a.enableFastLoad;
+    return {
+        active: active !== undefined ? active : false,
+        //Premium features
+        zoomOnHover: premiumEnabled && zoomOnHover !== undefined ? zoomOnHover : false,
+        showNavigationButton: premiumEnabled && showNavigationButton !== undefined ? showNavigationButton : false,
+        showThumbnails: premiumEnabled && showThumbnails !== undefined ? showThumbnails : false,
+        thumbnailMode: premiumEnabled && !!thumbnailMode ? thumbnailMode : "NONE",
+        borderColor: premiumEnabled && borderColor || '#999999',
+        navigationButtonColor: premiumEnabled && navigationButtonColor || '#999999',
+        borderRadius: premiumEnabled && borderRadius !== undefined ? borderRadius : 0,
+        borderWidth: premiumEnabled && borderWidth !== undefined ? borderWidth : 0,
+        thumbnailImageSize: premiumEnabled && thumbnailImageSize !== undefined ? thumbnailImageSize : 70,
+        thumbnailImageBorderWidth: premiumEnabled && thumbnailImageBorderWidth !== undefined ? thumbnailImageBorderWidth : 1,
+        thumbnailImageBorderColor: premiumEnabled && thumbnailImageBorderColor || '#000000',
+        thumbnailImageBorderRadius: premiumEnabled && thumbnailImageBorderRadius !== undefined ? thumbnailImageBorderRadius : 0,
+        enableFastLoad: enableFastLoad !== null && enableFastLoad !== void 0 ? enableFastLoad : false
+    };
+};
+exports.getDefaultsFromState = getDefaultsFromState;
+var getSwipingOptions = function (obj) {
+    var params = obj.params;
+    var imageThumbnail = function (index, className) {
+        var _a, _b;
+        var img = (_b = (_a = obj.selectedProduct) === null || _a === void 0 ? void 0 : _a.imageUrls) === null || _b === void 0 ? void 0 : _b[index];
+        return "<div class=\"" + className + "\" style=\"background-image: url('" + img + "'); \n              background-repeat: no-repeat;\n              background-size: 100%; \n              border:" + params.thumbnailImageBorderWidth + "px solid " + (params === null || params === void 0 ? void 0 : params.thumbnailImageBorderColor) + "; \n              width: " + params.thumbnailImageSize + "px; \n              height: " + params.thumbnailImageSize + "px; \n              border-radius: " + params.thumbnailImageBorderRadius + "px\"></div>";
+    };
+    var dotThumbnail = function () {
+        return "<span class=\"swiper-pagination-bullet swiper-pagination-bullet-active\" style=\"background-color: " + (params === null || params === void 0 ? void 0 : params.thumbnailImageBorderColor) + "\" tabindex=\"0\" role=\"button\" aria-label=\"Go to slide 1\"></span>";
+    };
+    return {
+        // If we need pagination
+        pagination: {
+            el: '.swiper-pagination',
+            clickable: true,
+            renderBullet: params.thumbnailMode === "IMAGES" ? imageThumbnail : dotThumbnail,
+        },
+        // Navigation arrows
+        navigation: {
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+        }
+    };
+};
+exports.getSwipingOptions = getSwipingOptions;
+
+(function () {
+
+    const loadScript = function (url, callback) {
+
+        const script = document.createElement("script");
+        script.type = "text/javascript";
+        script.defer = true;
+
+        // If the browser is Internet Explorer.
+        if (script.readyState) {
+            script.onreadystatechange = function () {
+                if (script.readyState === "loaded" || script.readyState === "complete") {
+                    script.onreadystatechange = null;
+                    callback();
+                }
+            };
+            // For any other browser.
+        } else {
+            script.onload = function () {
+                callback();
+            };
+        }
+
+        script.src = url;
+        document.getElementsByTagName("head")[0].appendChild(script);
+
+    };
+
+    /* This is my app's JavaScript */
+    const params = getDefaultsFromState(swiping_custom_data_configData, swiping_premium_Enabled);
+    const {
+        showThumbnails,
+        thumbnailMode,
+        zoomOnHover,
+        showNavigationButton,
+        active,
+        borderWidth,
+        borderColor,
+        borderRadius,
+        navigationButtonColor
+    } = params;
+
+    if (!active) {
+        return;
+    }
+
+    const getImages = function ($) {
+        let images = $(".product-single__thumbnail, .product-photo-thumb").map(function () {
+            return this.href;
+        }).get();
+
+        // Narrative
+        if (!images.length) {
+            images = $("a.product__submedia-wrapper").map(function () {
+                return this.href;
+            }).get();
+        }
+
+        if (!images.length) {
+            images = $(".feature-row__image," +
+                " .gallery__image," +
+                " .mfp-image"
+            ).map(function () {
+                return this.currentSrc;
+            }).get();
+        }
+
+        if (!images.length) {
+            images = $(
+                //Avenue
+                ".glider-contain img.img-align.lazyautosizes"
+            ).map(function () {
+                return $(this).attr('data-zoom');
+            }).get().filter(it => !!it);
+        }
+
+
+        if (!images.length) {
+            images = $("meta[itemprop='image']").map(function () {
+                return this.content;
+            }).get();
+        }
+
+        if (!images.length) {
+            images = $(".product__modal-opener img").map(function () {
+                return this.src;
+            }).get();
+        }
+
+        return swiping_premium_Enabled ? images : images.slice(0, 2);
+    };
+
+    const replaceImageLinks = function ($, swiper) {
+
+        //Debut
+        const $a = $("a.product-single__thumbnail, a.product-photo-thumb, " +
+
+            //Avenue
+            ".glider-contain a.img-align");
+        $a.each(function (index) {
+            console.log('log');
+
+            $(this).removeAttr("href");
+            $(this).removeAttr("data-thumbnail-id");
+            $(this).removeAttr("data-zoom");
+            $(this).removeAttr("data-image-id");
+            $(this).removeAttr("data-media-id");
+            $(this).removeAttr("click");
+
+            $(this).click(function (event) {
+                event.stopPropagation();
+                $a.removeClass("active-thumb");
+                $(this).addClass("active-thumb");
+                swiper.slideTo(index, 100, false);
+            });
+        });
+
+        swiper.on('slideChange', function () {
+            $a.removeClass("active-thumb");
+            $($a.get(swiper.activeIndex)).addClass("active-thumb");
+
+            //Venture
+            const $slick = $(".slick-active");
+
+            $slick.removeClass('is-active');
+            $($slick.get(swiper.activeIndex)).addClass("is-active");
+        })
+
+    }
+
+    //App specific code here
+    const myAppJavaScript = function ($) {
+        const head = $('head')
+        head.append('<link rel="stylesheet" type="text/css" href="https://unpkg.com/swiper@6.7.5/swiper-bundle.min.css">');
+
+        const classes =
+            //Debut
+            ".product-single__media, " +
+
+            //Minimal
+            ".product-single__image, " +
+
+            //Supply
+            ".lazyload__image-wrapper:not(.header-logo__image), " +
+
+            //Express
+            ".gallery__image-wrapper, " +
+
+            //Venture
+            "#ProductPhoto, " +
+
+            //Simple
+            ".product-single__featured-image-wrapper, " +
+
+            //Avenue
+            ".variant-image-product-template.variant-image, " +
+
+            ".photos__item, " +
+            ".product-photo-container, .product__media-container, " +
+
+             //Taste
+             ".slider-mobile-gutter";
+
+        const product = $(classes).filter((index, it) => it.clientHeight > 0 && it.clientWidth > 0);
+
+        if (product.length && product.children.length) {
+            const classNames = product.attr('class');
+            const paddingLeft = product.css('padding-left');
+
+
+            const images = getImages($);
+            const selectedProduct = {
+                title: '',
+                imageUrls: images
+            };
+
+            if (images.length === 0) {
+                return;
+            }
+
+            const swiper = new Swiper('#swiping-images .swiper-container', getSwipingOptions({params: params, selectedProduct}));
+
+            const slides = images
+                .filter(it => it.length)
+                .map(it => `<div class="swiper-slide" style="background-image: url('${it}')"></div>`)
+                .join('\n');
+
+
+            const $picture = $(".gallery__image-wrapper, " +
+                ".lazyload__image-wrapper:not(.header-logo__image), .feature-row__image")
+                .filter((index, it) => it.clientHeight > 0 && it.clientWidth > 0);
+
+            let height, width;
+            if ($picture.length) {
+                height = $picture.height();
+                width = $picture.width();
+            } else {
+                height = product.height();
+                width = product.width();
+            }
+
+            if (height < 20 || width < 20) {
+                return;
+            }
+
+            const paginationComponent = thumbnailMode !== "NONE" || showThumbnails ? '<div class="swiper-pagination"/>' : '';
+            const navigationComponents = images.length > 1 && showNavigationButton ? '<div class="swiper-button-prev"/><div class="swiper-button-next"/>' : '';
+
+            const style = `width: ${width}px; 
+              border: ${borderWidth}px solid ${borderColor}; border-radius: ${borderRadius}px; ${paddingLeft !== "0px" ? `margin-left: ${paddingLeft}` : ""}`;
+
+
+            product.first().replaceWith(`
+              <div id="swiping-images" class="${classNames}" style="${style}" data-product-single-media-group>
+                  <div class="swiper-container">
+                    <div class="swiper-wrapper">
+                      ${slides}
+                    </div>
+                    ${paginationComponent}
+                    ${navigationComponents}
+                  </div>
+                </div>`
+            );
+
+            if (zoomOnHover) {
+                $('.swiper-slide').each(function (index) {
+                    const image = images[index];
+                    $(this).zoom({url: image});
+                });
+            }
+
+            head.append(`<style>
+                #swiping-images .swiper-container {
+                    margin-left: 0;
+                    margin-right: 0;               
+                    border-radius: inherit;
+                }
+                
+                #swiping-images .swiper-wrapper, #swiping-images .swiper-slide {
+                    height: ${height}px;
+                }
+                
+                #swiping-images .swiper-slide {
+                    text-align: center;
+                    font-size: 18px;
+                    background: #fff;
+                    background-size: auto 100%;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                
+                    /* Center slide text vertically */
+                    display: -webkit-box;
+                    display: -ms-flexbox;
+                    display: -webkit-flex;
+                    display: flex;
+                    -webkit-box-pack: center;
+                    -ms-flex-pack: center;
+                    -webkit-justify-content: center;
+                    justify-content: center;
+                    -webkit-box-align: center;
+                    -ms-flex-align: center;
+                    -webkit-align-items: center;
+                    align-items: center;
+                }
+                
+                .swiper-button-prev, .swiper-button-next {
+                    color: ${navigationButtonColor} !important;
+                    width: calc(var(--swiper-navigation-size)/ 44 * 27) !important;
+                    display: flex !important;
+                }
+                
+                /*Overriden style for SIMPLE */
+                .product-single__featured-image-wrapper.hidden:first-of-type {
+                    display: block !important;
+                }
+            </style>`)
+
+            swiper.init();
+            replaceImageLinks($, swiper);
+        }
+
+        delete swiping_custom_data_configData;
+        delete swiping_premium_Enabled;
+    };
+
+
+    const loadSwiper = ($, callback) => {
+        if ((typeof Swiper === 'undefined') || typeof loadingSwiper === 'undefined') {
+            loadingSwiper = true;
+
+            loadScript('https://unpkg.com/swiper@6.7.5/swiper-bundle.min.js', function () {
+                const head = $('head')
+                head.append('<link rel="stylesheet" type="text/css" href="https://unpkg.com/swiper/swiper-bundle.min.css">');
+
+                callback();
+            });
+        } else {
+            callback();
+        }
+    }
+
+    const loadJQueryScript = (callback) => {
+        if ((typeof jQuery === 'undefined') || (parseInt(jQuery.fn.jquery) === 1 && parseFloat(jQuery.fn.jquery.replace(/^1\./, "")) < 9.1)) {
+            return loadScript('//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js', function () {
+                jQuery = jQuery.noConflict(true);
+                callback(jQuery);
+            });
+        } else {
+            callback(jQuery);
+        }
+    };
+
+
+    loadJQueryScript(function (jquery) {
+        loadSwiper(jquery, function () {
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/jquery-zoom/1.7.21/jquery.zoom.min.js', function () {
+                myAppJavaScript(jquery);
+            });
+        });
+    });
+
+
+})();
